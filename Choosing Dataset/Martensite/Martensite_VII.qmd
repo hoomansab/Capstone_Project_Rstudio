@@ -1031,7 +1031,7 @@ list(
 
 ```
 
-### Model Evolution Summary: 
+### Model Evolution Summary:
 
 ::: {style="font-size: 0.8em; width: 70%; margin: auto;"}
 | **Model**                            | **AIC** | **BIC**    | **R²** |
