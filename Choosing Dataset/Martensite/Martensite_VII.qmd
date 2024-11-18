@@ -18,7 +18,7 @@ Martensite is a phase where steel becomes extremely strong and can withstand hig
 
 ### The head of the dataset
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Load the dataset
 dataset <- read.csv("/Users/hoomansabarou/Downloads/Martensite Start-Temp.csv")
 head(dataset)
@@ -29,7 +29,7 @@ head(dataset)
 
 ### Checking for missing values
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Check for missing values
 sum(is.na(dataset))
 
@@ -39,8 +39,8 @@ sum(is.na(dataset))
 
 ### Checking the Structure of the Dataset
 
-```{r}
-# Check the structure of the dataset
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
 str(dataset)
 
 ```
@@ -68,29 +68,29 @@ Ms is ranged between 150 to 800 degree Celsius. However, the most of the data ar
 
 Carbon (C) has some zero contents which does not make any sense. Steel means Iron + Carbon. Iron without Carbon is not steel. C rows with zero content should be removed.
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # # Summary statistics of the dataset
 # summary(dataset)
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ## Correlation between variables
 # cor_matrix <- cor(dataset)
 # cor_matrix
 
 ```
 
-```{r}
-# Create a correlation matrix
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
 cor_matrix_initial <- dataset %>%
   select(Ms, C, Mn, Ni, Si, Cr, Ti, Nb, Mo, Co, V, Al, Cu, N, B, W ) %>%
   cor()
 
-# Convert the correlation matrix to long format for plotting
+
 cor_data <- as.data.frame(as.table(cor_matrix_initial))
 
-# Plot correlation heatmap
+
 ggplot(cor_data, aes(Var1, Var2, fill = Freq)) +
   geom_tile(color = "white") +
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
@@ -105,7 +105,7 @@ ggplot(cor_data, aes(Var1, Var2, fill = Freq)) +
 
 ### Scatter plot for one element and Martensite starting temperature
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Scatter plot for Carbon content vs Martensite Start Temperature 
 dataset %>%
   ggplot(aes(x = C, y = Ms)) +
@@ -121,7 +121,7 @@ Carbon rows with zero content are recognized.
 
 ### Histogram of Martensite starting temperature
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Plot histogram of Ms (Martensite start temperature)
 hist(dataset$Ms, 
      main = "Distribution of Martensite Start Temperature (Ms)", 
@@ -134,13 +134,13 @@ hist(dataset$Ms,
 
 ### Filtering the dataset for temperatures between 300 to 800 degree Celsius
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Filter the dataset for Ms between 300°C and 800°C
 filtered_dataset <- subset(dataset, Ms >= 300 & Ms <= 800)
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 hist(filtered_dataset$Ms, 
      main = "Distribution of Martensite Start Temperature (Ms)", 
      xlab = "Martensite Start Temperature (Ms)", 
@@ -153,16 +153,15 @@ hist(filtered_dataset$Ms,
 
 1.  Previous knowledge in Materials Science has been utilized to select important predictors. I am not sure if this is a correct approach.
 
-```{r}
-# Build the updated GLM model using filtered data
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
 updated_model <- glm(Ms ~ C + Ni + Mn + Mo + Si + Cr + V + Co, data = filtered_dataset, family = gaussian)
 
-# Summarize the updated model
 summary(updated_model)
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Model I:
 # 
 # AIC: 15699 
@@ -174,7 +173,7 @@ At the first glance, V and Co present weak predictors. These two have to be remo
 
 ### Checking residuals
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Check residuals with a QQ plot
 qqnorm(residuals(updated_model))
 qqline(residuals(updated_model), col = "red")
@@ -192,8 +191,7 @@ Residual Distribution is skewed.
 ### Identifying Outliers
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-# Identify outliers
-#| echo: false
+
 outlier_residuals <- which(abs(residuals(updated_model)) > 2 * sd(residuals(updated_model)))
 dataset[outlier_residuals, ]
 
@@ -203,19 +201,19 @@ dataset[outlier_residuals, ]
 
 2.  The model has been updated after removing zero cells for Carbon content.
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Remove rows where C is 0
 filtered_dataset_no_C0 <- subset(filtered_dataset, C != 0)
 
-# Build the updated GLM model using the filtered data
+
 updated_model_no_C0 <- glm(Ms ~ C + Ni + Mn + Mo + Si + Cr + V + Co, data = filtered_dataset_no_C0, family = gaussian)
 
-# Summarize the updated model
+
 summary(updated_model_no_C0)
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Model II:
 # 
 # AIC: 15010 
@@ -227,17 +225,17 @@ summary(updated_model_no_C0)
 
 3.  The model has been updated after removing weak predictors.
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Update the GLM model by removing Co and Mo, and adding an interaction between C and Mn
 updated_model_interaction <- glm(Ms ~ C * Mn + Ni + Si + Cr + V, 
                                  data = filtered_dataset_no_C0, family = gaussian)
 
-# Summarize the updated model
+
 summary(updated_model_interaction)
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Model III
 # AIC: 14984
 # BIC: 2465894.55
@@ -248,18 +246,17 @@ summary(updated_model_interaction)
 
 4.  Further revision in the model by removing a weak parameter and adding a new interaction parameter
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Update the model: remove V, and add interaction between C and Ni
 updated_model_C_Ni_interaction <- glm(Ms ~ C * Mn + C * Ni + Si + Cr, 
                                       data = filtered_dataset_no_C0, 
                                       family = gaussian)
 
-# Summarize the updated model
 summary(updated_model_C_Ni_interaction)
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Model IV:
 # AIC: 14935
 # BIC: 2384283.55
@@ -270,14 +267,14 @@ summary(updated_model_C_Ni_interaction)
 
 After reviewing Q-Q plot and its deviations in extreme values and a skewed residual distribution, a log model has been considered. It will be compared with the first model at the end.
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 log_model<- glm(formula = log(Ms) ~ C * Mn + C * Ni + Si + Cr, family = gaussian, data = filtered_dataset_no_C0)
 
 summary(log_model)
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Model V:
 # 
 # AIC: -3578
@@ -296,28 +293,28 @@ anova_check(updated_model_C_Ni_interaction)
 
 ### Performing ANOVA for the Log Model
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 anova_check(log_model)
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # library(glmtoolbox)
 # (adjR2(updated_model_C_Ni_interaction))
 ```
 
 ### Checking leverage and influential points for both models
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 cooks(updated_model_C_Ni_interaction)
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 cooks(log_model)
 ```
 
 ### Investigate the Influential Points
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Investigate the influential points
 influential_points <- c(1081, 685, 686)
 filtered_dataset_no_C0[influential_points, ]
@@ -329,7 +326,7 @@ By reviewing Carbon and Chromium contents, it can be decided that these three po
 
 ### Remove Influential Points and Updating Models
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 
 filtered_dataset_no_influential <- filtered_dataset_no_C0[-c(1081, 685, 686), ]
 
@@ -343,7 +340,7 @@ summary(updated_model_no_influential)
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Model VI:
 # 
 # AIC: 14751 
@@ -351,7 +348,7 @@ summary(updated_model_no_influential)
 # R²: 0.816 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 
 log_model_no_influential <- glm(formula = log(Ms) ~ C * Mn + C * Ni + Si + Cr, family = gaussian, data = filtered_dataset_no_influential)
 
@@ -363,7 +360,7 @@ summary(log_model_no_influential)
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Model VII:
 # 
 # AIC: -3733.4 
@@ -373,7 +370,7 @@ summary(log_model_no_influential)
 
 ### Investigate Points Found Out by Cook's Distances
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Investigate the observations with moderate Cook's Distance
 moderate_influential_points <- c(1132, 1188, 1061)
 filtered_dataset_no_C0[moderate_influential_points, ]
@@ -384,7 +381,7 @@ These observation are valid and will be kept in the dataset.
 
 ### Apply the Residuals Check to the Filtered Dataset
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Apply the residuals check to the correct dataset (filtered_dataset_no_influential)
 filtered_dataset_no_influential <- filtered_dataset_no_influential %>% 
   mutate(outlier = if_else(abs(rstandard(updated_model_no_influential)) > 2.5, 
@@ -394,14 +391,14 @@ filtered_dataset_no_influential <- filtered_dataset_no_influential %>%
 
 ### Counting Outliers
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 
 filtered_dataset_no_influential %>% count(outlier)
 ```
 
 ### Plotting Carbon Content with Martensite Starting Temperature
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 library(ggplot2)
 filtered_dataset_no_influential %>% ggplot(aes(x = C, y = Ms, color = outlier)) +
   geom_point() + 
@@ -412,12 +409,12 @@ filtered_dataset_no_influential %>% ggplot(aes(x = C, y = Ms, color = outlier)) 
 
 ### Performing ANOVA for Both Models After Removing Influential Points
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 anova_check(updated_model_no_influential)
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 anova_check(log_model_no_influential)
 ```
 
@@ -441,7 +438,7 @@ car::vif(log_model_no_influential, type = "predictor")
 
 ### Remove Identified Outliers and Revise Both Models
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 #Removing identified outliers
 filtered_dataset_no_influential_no_outlier <- filtered_dataset_no_influential %>% filter(outlier == "Not Suspected")
 
@@ -451,6 +448,36 @@ updated_model_no_influential_2 <- glm(Ms ~ C * Mn + C * Ni + Si + Cr,
 
 summary(updated_model_no_influential_2)
 
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# null_deviance <- 10969684  
+# residual_deviance <- 1080263  
+# n <- 1429  
+# p <- 8  
+# residual_df <- n - p - 1
+# 
+# # Residual Standard Error (RSE)
+# rse <- sqrt(residual_deviance / residual_df)
+# 
+# # Multiple R-squared
+# r_squared <- 1 - (residual_deviance / null_deviance)
+# 
+# # Adjusted R-squared
+# adj_r_squared <- 1 - ((1 - r_squared) * (n - 1) / residual_df)
+# 
+# # F-statistic
+# f_statistic <- ((null_deviance - residual_deviance) / p) / (residual_deviance / residual_df)
+# 
+# # Print results
+# list(
+#   Residual_Standard_Error = rse,
+#   Multiple_R_Squared = r_squared,
+#   Adjusted_R_Squared = adj_r_squared,
+#   F_Statistic = f_statistic
+# )
 
 ```
 
@@ -464,26 +491,58 @@ summary(updated_model_no_influential_2)
 
 ### Performing ANOVA for the First Model After Removing Outliers
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 anova_check(updated_model_no_influential_2)
 ```
 
 ### Checking Cook's Distance After Removing Outliers
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 cooks(updated_model_no_influential_2)
 ```
 
 ### Log Model After Removing Outliers
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 log_model_no_influential_no_outlier <- glm(formula = log(Ms) ~ C * Mn + C * Ni + Si + Cr, family = gaussian, data = filtered_dataset_no_influential_no_outlier)
 
 # Summarize the updated model
 summary(log_model_no_influential_no_outlier)
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# null_deviance <- 34.4909  
+# residual_deviance <- 2.9615  
+# n <- 1429  
+# p <- 8  
+# 
+# 
+# residual_df <- n - p - 1
+# 
+# 
+# rse <- sqrt(residual_deviance / residual_df)
+# 
+# 
+# r_squared <- 1 - (residual_deviance / null_deviance)
+# 
+# 
+# adj_r_squared <- 1 - ((1 - r_squared) * (n - 1) / residual_df)
+# 
+# 
+# f_statistic <- ((null_deviance - residual_deviance) / p) / (residual_deviance / residual_df)
+# 
+# 
+# list(
+#   Residual_Standard_Error = rse,
+#   Multiple_R_Squared = r_squared,
+#   Adjusted_R_Squared = adj_r_squared,
+#   F_Statistic = f_statistic
+# )
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Model IX:
 # 
 # AIC: -4756.5
@@ -493,13 +552,13 @@ summary(log_model_no_influential_no_outlier)
 
 ### Performing ANOVA for The Log Model After Removing Outliers
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 anova_check(log_model_no_influential_no_outlier)
 ```
 
 ### Checking Cook's Distance
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 cooks(log_model_no_influential_no_outlier)
 ```
 
@@ -547,32 +606,25 @@ cooks(log_model_no_influential_no_outlier)
 
 </style>
 ```
-+----------------------------+--------+--------+--------+--------+--------+
 | Variable                   | Min    | Max    | Mean   | Median | SD     |
-+============================+========+========+========+========+========+
+|----------------------------|--------|--------|--------|--------|--------|
 | Ms (Martensite Start Temp) | 310.00 | 784.00 | 601.80 | 605.00 | 120.00 |
-+----------------------------+--------+--------+--------+--------+--------+
 | C (Carbon)                 | 0.00   | 1.46   | 0.36   | 0.33   | 0.10   |
-+----------------------------+--------+--------+--------+--------+--------+
 | Mn (Manganese)             | 0.00   | 4.95   | 0.79   | 0.69   | 0.30   |
-+----------------------------+--------+--------+--------+--------+--------+
 | Ni (Nickel)                | 0.00   | 27.20  | 1.56   | 0.15   | 0.50   |
-+----------------------------+--------+--------+--------+--------+--------+
 | Si (Silicon)               | 0.00   | 3.80   | 0.35   | 0.26   | 0.20   |
-+----------------------------+--------+--------+--------+--------+--------+
 | Cr (Chromium)              | 0.00   | 16.20  | 1.04   | 0.52   | 0.70   |
-+----------------------------+--------+--------+--------+--------+--------+
 
-```{r}
-# Create a correlation matrix
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
 cor_matrix <- filtered_dataset_no_influential_no_outlier %>%
   select(Ms, C, Mn, Ni, Si, Cr) %>%
   cor()
 
-# Convert the correlation matrix to long format for plotting
+
 cor_data <- as.data.frame(as.table(cor_matrix))
 
-# Plot correlation heatmap
+
 ggplot(cor_data, aes(Var1, Var2, fill = Freq)) +
   geom_tile(color = "white") +
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
@@ -584,17 +636,17 @@ ggplot(cor_data, aes(Var1, Var2, fill = Freq)) +
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 write.csv(summary(filtered_dataset_no_influential_no_outlier[c("Ms", "C", "Mn", "Ni", "Si", "Cr")]), "NewTable.csv")
 ```
 
 ### Updated Summary for the Revised Dataset
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-# Descriptive statistics summary for key variables
+
 summary(filtered_dataset_no_influential_no_outlier[c("Ms", "C", "Mn", "Ni", "Si", "Cr")])
 
-# Alternatively, for more detailed summaries including variance, skewness, etc.
+
 library(psych)
 describe(filtered_dataset_no_influential_no_outlier[c("Ms", "C", "Mn", "Ni", "Si", "Cr")])
 
@@ -602,9 +654,9 @@ describe(filtered_dataset_no_influential_no_outlier[c("Ms", "C", "Mn", "Ni", "Si
 
 ### Histograms for Key Variables in the Revised Dataset
 
-```{r}
-# Plot histograms for key variables
-par(mfrow = c(2, 3))  # Set layout for 6 plots
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow = c(2, 3))  
 hist(filtered_dataset_no_influential_no_outlier$Ms, main = "Ms Distribution", xlab = "Ms", col = "lightblue")
 hist(filtered_dataset_no_influential_no_outlier$C, main = "Carbon (C) Distribution", xlab = "C", col = "lightgreen")
 hist(filtered_dataset_no_influential_no_outlier$Mn, main = "Manganese (Mn) Distribution", xlab = "Mn", col = "lightpink")
@@ -627,23 +679,15 @@ hist(filtered_dataset_no_influential_no_outlier$Cr, main = "Chromium (Cr) Distri
 .tg .tg-0pky{border-color:inherit;text-align:left;vertical-align:top}
 </style>
 ```
-+------------+------------+-------------------------+------------+
-| Variables  | Mean ± SD  | Correlation Coefficient | P-value    |
-+============+============+=========================+============+
-| C          | 0.36 ± 0.1 | -286.71                 | \< 2e-16   |
-+------------+------------+-------------------------+------------+
-| Mn         | 0.79 ± 0.3 | -16.42                  | 1.36E-13   |
-+------------+------------+-------------------------+------------+
-| Ni         | 1.55 ± 0.5 | -14.04                  | \< 2e-16   |
-+------------+------------+-------------------------+------------+
-| Si         | 0.35 ± 0.2 | -13.89                  | 1.70E-13   |
-+------------+------------+-------------------------+------------+
-| Cr         | 1.04 ± 0.7 | -10.13                  | \< 2e-16   |
-+------------+------------+-------------------------+------------+
-| C:Mn       | N/A        | -41.45                  | \< 2e-16   |
-+------------+------------+-------------------------+------------+
-| C:Ni       | N/A        | -8.36                   | 9.68E-10   |
-+------------+------------+-------------------------+------------+
+| Variables | Mean ± SD  | Correlation Coefficient | P-value  |
+|-----------|------------|-------------------------|----------|
+| C         | 0.36 ± 0.1 | -286.71                 | \< 2e-16 |
+| Mn        | 0.79 ± 0.3 | -16.42                  | 1.36E-13 |
+| Ni        | 1.55 ± 0.5 | -14.04                  | \< 2e-16 |
+| Si        | 0.35 ± 0.2 | -13.89                  | 1.70E-13 |
+| Cr        | 1.04 ± 0.7 | -10.13                  | \< 2e-16 |
+| C:Mn      | N/A        | -41.45                  | \< 2e-16 |
+| C:Ni      | N/A        | -8.36                   | 9.68E-10 |
 
 #### The model is:
 
@@ -692,23 +736,15 @@ Each coefficient in this model tells us the **marginal effect** of that variab
 .tg .tg-za14{border-color:inherit;text-align:left;vertical-align:bottom}
 </style>
 ```
-+------------+------------+-------------------------+------------+
-| Variables  | Mean ± SD  | Correlation Coefficient | P-value    |
-+============+============+=========================+============+
-| C          | 0.36 ± 0.1 | -0.51                   | \< 2e-16   |
-+------------+------------+-------------------------+------------+
-| Mn         | 0.79 ± 0.3 | -0.032                  | \< 2e-16   |
-+------------+------------+-------------------------+------------+
-| Ni         | 1.55 ± 0.5 | -0.0255                 | \< 2e-16   |
-+------------+------------+-------------------------+------------+
-| Si         | 0.35 ± 0.2 | -0.0226                 | 4.48E-13   |
-+------------+------------+-------------------------+------------+
-| Cr         | 1.04 ± 0.7 | -0.0175                 | \< 2e-16   |
-+------------+------------+-------------------------+------------+
-| C:Mn       | N/A        | -0.0751                 | \< 2e-16   |
-+------------+------------+-------------------------+------------+
-| C:Ni       | N/A        | -0.0154                 | 1.01E-11   |
-+------------+------------+-------------------------+------------+
+| Variables | Mean ± SD  | Correlation Coefficient | P-value  |
+|-----------|------------|-------------------------|----------|
+| C         | 0.36 ± 0.1 | -0.51                   | \< 2e-16 |
+| Mn        | 0.79 ± 0.3 | -0.032                  | \< 2e-16 |
+| Ni        | 1.55 ± 0.5 | -0.0255                 | \< 2e-16 |
+| Si        | 0.35 ± 0.2 | -0.0226                 | 4.48E-13 |
+| Cr        | 1.04 ± 0.7 | -0.0175                 | \< 2e-16 |
+| C:Mn      | N/A        | -0.0751                 | \< 2e-16 |
+| C:Ni      | N/A        | -0.0154                 | 1.01E-11 |
 
 #### The model is:
 
@@ -770,6 +806,32 @@ print(cv_result$delta)
 
 ```
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+cv_mse <- cv_result$delta[2] 
+cv_rmse <- sqrt(cv_mse)  
+
+
+cv_abs_residuals <- abs(filtered_dataset_no_influential_no_outlier$Ms - 
+                          predict(glm(final_model_formula, 
+                                      data = filtered_dataset_no_influential_no_outlier), 
+                                  filtered_dataset_no_influential_no_outlier))
+
+cv_mae <- mean(cv_abs_residuals)  # MAE
+
+# R-squared
+observed_variance <- var(filtered_dataset_no_influential_no_outlier$Ms)
+cv_r_squared <- 1 - (cv_mse / observed_variance)  # R-squared
+
+# Print results
+list(
+  RMSE = cv_rmse,
+  MAE = cv_mae,
+  R_squared = cv_r_squared
+)
+
+```
+
 #### 10-Fold
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -817,9 +879,39 @@ print(cv_results$delta)
 
 ```
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+cv_mse <- cv_results$delta[2]  
+
+# Calculate RMSE
+cv_rmse <- sqrt(cv_mse)  # Root Mean Squared Error
+
+
+predicted_log_values <- predict(log_model_no_influential_no_outlier, 
+                                 newdata = filtered_dataset_no_influential_no_outlier)
+
+
+log_residuals <- filtered_dataset_no_influential_no_outlier$Ms - exp(predicted_log_values)
+
+# Calculate MAE (Mean Absolute Error)
+cv_mae <- mean(abs(log_residuals))
+
+# R-squared (Coefficient of Determination)
+observed_log_variance <- var(log(filtered_dataset_no_influential_no_outlier$Ms))
+cv_r_squared <- 1 - (cv_mse / observed_log_variance)
+
+
+list(
+  RMSE = cv_rmse,
+  MAE = cv_mae,
+  R_squared = cv_r_squared
+)
+
+```
+
 #### 10-Fold
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 
 log_model_no_influential_no_outlier <- glm(formula = log(Ms) ~ C * Mn + C * Ni + Si + Cr, 
                                            family = gaussian, 
@@ -854,7 +946,7 @@ print(cv_results$delta)
 
 #### The Untransformed Model
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 
 library(boot)
 
@@ -868,9 +960,38 @@ print(untransformed_loocv$delta)
 
 ```
 
+```{r}
+
+loocv_mse <- untransformed_loocv$delta[2]  
+
+
+loocv_rmse <- sqrt(loocv_mse)
+
+
+predicted_values <- predict(untransformed_model, newdata = filtered_dataset_no_influential_no_outlier)
+
+
+residuals <- filtered_dataset_no_influential_no_outlier$Ms - predicted_values
+
+
+loocv_mae <- mean(abs(residuals))
+
+
+observed_variance <- var(filtered_dataset_no_influential_no_outlier$Ms)
+loocv_r_squared <- 1 - (loocv_mse / observed_variance)
+
+
+list(
+  RMSE = loocv_rmse,
+  MAE = loocv_mae,
+  R_squared = loocv_r_squared
+)
+
+```
+
 #### The Log-Transformed Model
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 
 log_model <- glm(formula = log(Ms) ~ C * Mn + C * Ni + Si + Cr, family = gaussian, 
                  data = filtered_dataset_no_influential_no_outlier)
@@ -880,6 +1001,60 @@ log_loocv <- cv.glm(filtered_dataset_no_influential_no_outlier, log_model, K = n
 print(log_loocv$delta)
 
 ```
+
+```{r}
+# Extract LOOCV results for log model
+loocv_mse <- log_loocv$delta[2]  # Bias-corrected MSE (mean squared error)
+
+# Calculate RMSE (Root Mean Squared Error)
+loocv_rmse <- sqrt(loocv_mse)
+
+# Predicted values for the log model
+predicted_log_values <- predict(log_model, newdata = filtered_dataset_no_influential_no_outlier)
+
+# Residuals for LOOCV (in the original scale)
+log_residuals <- filtered_dataset_no_influential_no_outlier$Ms - exp(predicted_log_values)
+
+# Calculate MAE (Mean Absolute Error)
+loocv_mae <- mean(abs(log_residuals))
+
+# Calculate R-squared (Coefficient of Determination)
+observed_variance_log <- var(log(filtered_dataset_no_influential_no_outlier$Ms))
+loocv_r_squared <- 1 - (loocv_mse / observed_variance_log)
+
+# Print results
+list(
+  RMSE = loocv_rmse,
+  MAE = loocv_mae,
+  R_squared = loocv_r_squared
+)
+
+```
+
+### Model Evolution Summary: 
+
+::: {style="font-size: 0.8em; width: 70%; margin: auto;"}
+| **Model**                            | **AIC** | **BIC**    | **R²** |
+|--------------------------------------|---------|------------|--------|
+| I (Basic)                            | 15699   | 2984481.84 | 0.753  |
+| II (Remove C=0)                      | 15010   | 2506169.56 | 0.788  |
+| III (Remove Co, Mo-C:Mn)             | 14984   | 2465894.55 | 0.791  |
+| IV (Remove V, C:Ni)                  | 14935   | 2384283.55 | 0.798  |
+| V (Log Model)                        | -3578   | 72.79      | 0.808  |
+| VI (Influential Points Removal)      | 14751   | 2142102.54 | 0.816  |
+| VII (Influential Points Removal-Log) | -3733.4 | 71.99      | 0.826  |
+| VIII (Outliers Removal)              | 13545   | 1080328.38 | 0.902  |
+| IX (Outlier Removal-Log)             | -4756.5 | 68.34      | 0.914  |
+:::
+
+### Model Performance Summary
+
+| **Model**        | **Cross-Validation** | **RMSE** | **MAE** | **R²** |
+|------------------|----------------------|----------|---------|--------|
+| Regression Model | 5-Fold               | 27.79    | 20.43   | 0.90   |
+| Log Model        | 5-Fold               | 0.05     | 18.28   | 0.91   |
+| Regression Model | LOOCV                | 27.80    | 20.43   | 0.90   |
+| Log Model        | LOOCV                | 0.05     | 22.02   | 0.91   |
 
 ### Model Comparison
 

@@ -411,6 +411,16 @@ $log(Ms) = -6.69 - 0.51C - 0.03 Mn - 0.03 Ni - 0.03 Si - 0.02Cr - 0.07 C:Mn - 0.
 
 ## Cross-Validation
 
+## Model Performance Summary
+
+| **Model**           | **Cross-Validation** | **RMSE** | **MAE** | **R²**  |
+|----------------------|----------------------|----------|---------|---------|
+| Regression Model     | 5-Fold              | 27.79    | 20.43   | 0.90    |
+| Log Model            | 5-Fold              | 0.05     | 18.28   | 0.91    |
+| Regression Model     | LOOCV               | 27.80    | 20.43   | 0.90    |
+| Log Model            | LOOCV               | 0.05     | 22.02   | 0.91    |
+
+
 Two kinds of cross-validation methods have been conducted: k-Fold and the Leave-One-Out Cross-Validation (LOOCV)
 
 ## k-Fold 
